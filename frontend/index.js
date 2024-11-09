@@ -11,8 +11,6 @@ async function initialize() {
         for (const continent of continents) {
             const section = createContinentSection(continent);
             container.appendChild(section);
-            
-            // Load data for each continent
             loadContinentData(continent);
         }
     } catch (error) {
@@ -57,37 +55,66 @@ function createContinentSection(continent) {
 
 async function loadContinentData(continent) {
     try {
-        const [hubs, news] = await Promise.all([
-            backend.getHubsByContinent(continent),
-            backend.getNewsByContinent(continent)
-        ]);
+        const hubs = await backend.getHubsByContinent(continent);
+        const news = await fetchNewsForContinent(continent);
 
+        // Group hubs by country
+        const hubsByCountry = groupByCountry(hubs);
+        
         // Update hubs
         const hubsContainer = document.getElementById(`hubs-${continent}`);
-        hubsContainer.innerHTML = hubs.length ? hubs.map(hub => `
-            <div class="hub-item">
-                <h4>${hub.name}</h4>
-                <p>${hub.description}</p>
-                <div class="hub-details">
-                    <p><strong>Location:</strong> ${hub.location}</p>
-                    <p><strong>Contact:</strong> ${hub.contact}</p>
-                    <a href="${hub.website}" target="_blank" class="btn btn-primary btn-sm">Visit Website</a>
-                </div>
+        hubsContainer.innerHTML = Object.entries(hubsByCountry).map(([country, countryHubs]) => `
+            <div class="country-section">
+                <h4 class="country-title">${country}</h4>
+                ${countryHubs.map(hub => `
+                    <div class="hub-item">
+                        <h5>${hub.name}</h5>
+                        <p>${hub.description}</p>
+                        <div class="hub-details">
+                            <p><strong>Location:</strong> ${hub.location}</p>
+                            <p><strong>Contact:</strong> ${hub.contact}</p>
+                            <a href="${hub.website}" target="_blank" class="btn btn-primary btn-sm">Visit Website</a>
+                        </div>
+                    </div>
+                `).join('')}
             </div>
-        `).join('') : '<p>No hubs available in this region.</p>';
+        `).join('') || '<p>No hubs available in this region.</p>';
 
         // Update news
         const newsContainer = document.getElementById(`news-${continent}`);
         newsContainer.innerHTML = news.length ? news.map(article => `
             <div class="news-item">
                 <h4>${article.title}</h4>
-                <p>${article.content}</p>
-                <small>${new Date(Number(article.date) / 1000000).toLocaleDateString()}</small>
+                <p>${article.description}</p>
+                <small>${new Date(article.publishedAt).toLocaleDateString()}</small>
+                ${article.url ? `<a href="${article.url}" target="_blank" class="btn btn-link">Read more</a>` : ''}
             </div>
         `).join('') : '<p>No news available for this region.</p>';
 
     } catch (error) {
         console.error(`Failed to load data for ${continent}:`, error);
+    }
+}
+
+function groupByCountry(hubs) {
+    return hubs.reduce((acc, hub) => {
+        if (!acc[hub.country]) {
+            acc[hub.country] = [];
+        }
+        acc[hub.country].push(hub);
+        return acc;
+    }, {});
+}
+
+async function fetchNewsForContinent(continent) {
+    try {
+        // Using a public news API that doesn't require authentication
+        const response = await fetch(`https://api.spaceflightnewsapi.net/v4/articles/?limit=5&title_contains=${continent}`);
+        const data = await response.json();
+        return data.results || [];
+    } catch (error) {
+        console.error('Failed to fetch news:', error);
+        return [];
     }
 }
 

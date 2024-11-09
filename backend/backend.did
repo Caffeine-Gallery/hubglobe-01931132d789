@@ -1,15 +1,8 @@
-type NewsArticle = 
- record {
-   content: text;
-   continent: text;
-   date: int;
-   id: text;
-   title: text;
- };
 type Hub = 
  record {
    contact: text;
    continent: text;
+   country: text;
    description: text;
    id: text;
    location: text;
@@ -19,5 +12,4 @@ type Hub =
 service : {
   getAllContinents: () -> (vec text) query;
   getHubsByContinent: (text) -> (vec Hub) query;
-  getNewsByContinent: (text) -> (vec NewsArticle) query;
 }

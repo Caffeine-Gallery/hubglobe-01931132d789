@@ -9,11 +9,11 @@ import Text "mo:base/Text";
 import Time "mo:base/Time";
 
 actor {
-    // Types
     type Hub = {
         id: Text;
         name: Text;
         continent: Text;
+        country: Text;
         description: Text;
         location: Text;
         website: Text;
@@ -25,25 +25,23 @@ actor {
         title: Text;
         content: Text;
         continent: Text;
+        country: Text;
         date: Int;
     };
 
-    // Stable storage
     private stable var hubEntries : [(Text, Hub)] = [];
     private stable var newsEntries : [(Text, NewsArticle)] = [];
 
-    // In-memory storage
     private var hubs = HashMap.HashMap<Text, Hub>(10, Text.equal, Text.hash);
     private var news = HashMap.HashMap<Text, NewsArticle>(10, Text.equal, Text.hash);
 
-    // Initialize data
     private func initializeData() {
-        // Sample hubs data
         let sampleHubs : [Hub] = [
             {
                 id = "hub1";
                 name = "London ICP Hub";
                 continent = "Europe";
+                country = "United Kingdom";
                 description = "The main ICP hub in London";
                 location = "London, UK";
                 website = "https://london.icp.hub";
@@ -53,20 +51,31 @@ actor {
                 id = "hub2";
                 name = "Singapore ICP Hub";
                 continent = "Asia";
+                country = "Singapore";
                 description = "Singapore's premier ICP community center";
                 location = "Singapore";
                 website = "https://singapore.icp.hub";
                 contact = "singapore@icphub.org";
+            },
+            {
+                id = "hub3";
+                name = "Berlin ICP Hub";
+                continent = "Europe";
+                country = "Germany";
+                description = "Berlin's blockchain innovation center";
+                location = "Berlin, Germany";
+                website = "https://berlin.icp.hub";
+                contact = "berlin@icphub.org";
             }
         ];
 
-        // Sample news data
         let sampleNews : [NewsArticle] = [
             {
                 id = "news1";
                 title = "European ICP Summit Announced";
                 content = "Major ICP summit to be held in Paris this summer";
                 continent = "Europe";
+                country = "France";
                 date = Time.now();
             },
             {
@@ -74,16 +83,15 @@ actor {
                 title = "Asian Blockchain Week Features ICP";
                 content = "ICP takes center stage at Asian Blockchain Week";
                 continent = "Asia";
+                country = "Singapore";
                 date = Time.now();
             }
         ];
 
-        // Initialize hubs
         for (hub in sampleHubs.vals()) {
             hubs.put(hub.id, hub);
         };
 
-        // Initialize news
         for (article in sampleNews.vals()) {
             news.put(article.id, article);
         };
@@ -106,7 +114,6 @@ actor {
         };
     };
 
-    // Query functions
     public query func getHubsByContinent(continent: Text) : async [Hub] {
         let hubBuffer = Buffer.Buffer<Hub>(0);
         for ((_, hub) in hubs.entries()) {
@@ -115,16 +122,6 @@ actor {
             };
         };
         Buffer.toArray(hubBuffer)
-    };
-
-    public query func getNewsByContinent(continent: Text) : async [NewsArticle] {
-        let newsBuffer = Buffer.Buffer<NewsArticle>(0);
-        for ((_, article) in news.entries()) {
-            if (article.continent == continent) {
-                newsBuffer.add(article);
-            };
-        };
-        Buffer.toArray(newsBuffer)
     };
 
     public query func getAllContinents() : async [Text] {
