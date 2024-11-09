@@ -39,7 +39,7 @@ function createContinentSection(continent) {
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-body">
-                        <h3>News</h3>
+                        <h3>ICP News</h3>
                         <div id="news-${continent}" class="news-container">
                             <div class="spinner-border spinner-border-sm" role="status">
                                 <span class="visually-hidden">Loading...</span>
@@ -55,8 +55,10 @@ function createContinentSection(continent) {
 
 async function loadContinentData(continent) {
     try {
-        const hubs = await backend.getHubsByContinent(continent);
-        const news = await fetchNewsForContinent(continent);
+        const [hubs, news] = await Promise.all([
+            fetchHubsData(continent),
+            fetchICPNews(continent)
+        ]);
 
         // Group hubs by country
         const hubsByCountry = groupByCountry(hubs);
@@ -86,10 +88,10 @@ async function loadContinentData(continent) {
             <div class="news-item">
                 <h4>${article.title}</h4>
                 <p>${article.description}</p>
-                <small>${new Date(article.publishedAt).toLocaleDateString()}</small>
+                <small>${new Date(article.date).toLocaleDateString()}</small>
                 ${article.url ? `<a href="${article.url}" target="_blank" class="btn btn-link">Read more</a>` : ''}
             </div>
-        `).join('') : '<p>No news available for this region.</p>';
+        `).join('') : '<p>No ICP news available for this region.</p>';
 
     } catch (error) {
         console.error(`Failed to load data for ${continent}:`, error);
@@ -106,14 +108,97 @@ function groupByCountry(hubs) {
     }, {});
 }
 
-async function fetchNewsForContinent(continent) {
+async function fetchHubsData(continent) {
     try {
-        // Using a public news API that doesn't require authentication
-        const response = await fetch(`https://api.spaceflightnewsapi.net/v4/articles/?limit=5&title_contains=${continent}`);
+        // Proxy endpoint to fetch data from icphubs.org
+        const response = await fetch(`https://api.icphubs.org/hubs?continent=${encodeURIComponent(continent)}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch hubs data');
+        }
         const data = await response.json();
-        return data.results || [];
+        return data.hubs || [];
     } catch (error) {
-        console.error('Failed to fetch news:', error);
+        console.error('Failed to fetch hubs:', error);
+        // Fallback to backend data if API fails
+        return backend.getHubsByContinent(continent);
+    }
+}
+
+async function fetchICPNews(continent) {
+    try {
+        const sources = [
+            fetchDfinityBlogPosts(),
+            fetchICPBlogPosts(),
+            fetchMediumPosts()
+        ];
+
+        const allNews = await Promise.all(sources);
+        const combinedNews = allNews.flat().sort((a, b) => b.date - a.date);
+        
+        // Filter news by continent if possible, otherwise return all
+        return combinedNews.slice(0, 5); // Limit to 5 most recent articles
+    } catch (error) {
+        console.error('Failed to fetch ICP news:', error);
+        return [];
+    }
+}
+
+async function fetchDfinityBlogPosts() {
+    try {
+        const response = await fetch('https://blog.dfinity.org/feed');
+        const text = await response.text();
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(text, 'text/xml');
+        const items = xml.querySelectorAll('item');
+        
+        return Array.from(items).map(item => ({
+            title: item.querySelector('title').textContent,
+            description: item.querySelector('description').textContent,
+            date: new Date(item.querySelector('pubDate').textContent).getTime(),
+            url: item.querySelector('link').textContent
+        }));
+    } catch (error) {
+        console.error('Failed to fetch DFINITY blog posts:', error);
+        return [];
+    }
+}
+
+async function fetchICPBlogPosts() {
+    try {
+        const response = await fetch('https://internetcomputer.org/blog/feed.xml');
+        const text = await response.text();
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(text, 'text/xml');
+        const items = xml.querySelectorAll('item');
+        
+        return Array.from(items).map(item => ({
+            title: item.querySelector('title').textContent,
+            description: item.querySelector('description').textContent,
+            date: new Date(item.querySelector('pubDate').textContent).getTime(),
+            url: item.querySelector('link').textContent
+        }));
+    } catch (error) {
+        console.error('Failed to fetch ICP blog posts:', error);
+        return [];
+    }
+}
+
+async function fetchMediumPosts() {
+    try {
+        const response = await fetch('https://medium.com/feed/@dfinity');
+        const text = await response.text();
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(text, 'text/xml');
+        const items = xml.querySelectorAll('item');
+        
+        return Array.from(items).map(item => ({
+            title: item.querySelector('title').textContent,
+            description: item.querySelector('description').textContent,
+            date: new Date(item.querySelector('pubDate').textContent).getTime(),
+            url: item.querySelector('link').textContent
+        }));
+    } catch (error) {
+        console.error('Failed to fetch Medium posts:', error);
         return [];
     }
 }
