@@ -1,0 +1,123 @@
+:root {
+    --primary-color: #29ABE2;
+    --secondary-color: #522785;
+    --dark-color: #1E1E1E;
+    --light-color: #F5F5F5;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    line-height: 1.6;
+    color: var(--dark-color);
+    background-color: var(--light-color);
+}
+
+.navbar {
+    background-color: var(--secondary-color);
+    padding: 1rem 0;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    color: white;
+}
+
+.hero {
+    background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+    color: white;
+    padding: 4rem 0;
+    margin-bottom: 3rem;
+    text-align: center;
+}
+
+.hero h1 {
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+.continent-section {
+    padding: 2rem 0;
+}
+
+.continent-title {
+    color: var(--secondary-color);
+    margin-bottom: 2rem;
+    font-weight: bold;
+    position: relative;
+    padding-bottom: 0.5rem;
+}
+
+.continent-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 50px;
+    height: 3px;
+    background-color: var(--primary-color);
+}
+
+.card {
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    height: 100%;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.hub-item, .news-item {
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+.hub-item:last-child, .news-item:last-child {
+    border-bottom: none;
+}
+
+.hub-item h4, .news-item h4 {
+    color: var(--secondary-color);
+    margin-bottom: 0.5rem;
+}
+
+.hub-details {
+    margin-top: 1rem;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+
+.footer {
+    background-color: var(--dark-color);
+    color: white;
+    padding: 2rem 0;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .hero {
+        padding: 2rem 0;
+    }
+
+    .hero h1 {
+        font-size: 2rem;
+    }
+
+    .continent-section {
+        padding: 1rem 0;
+    }
+
+    .card {
+        margin-bottom: 1rem;
+    }
+}
